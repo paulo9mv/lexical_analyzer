@@ -232,6 +232,8 @@ while i < len(textoTeste):
                     temp.append(letter)
                 elif len(temp) > 0 and isLetter(temp[0]) and not isPoint(letter):
                     temp.append(letter)
+                elif len(temp) > 0 and isNumber(letter) or isLetter(letter):
+                    temp.append(letter)
                 else:
                     palavra = ''.join(temp)
                     isWordReserved(palavra)
