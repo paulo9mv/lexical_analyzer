@@ -1,3 +1,10 @@
+import sys
+
+texto = sys.argv[1]
+
+f = open(texto, "r")
+contents = f.read()
+
 #Analisador lexico
 reservedWords = ['ABSOLUTE', 'ARRAY','BEGIN', 'CASE', 'CHAR',
                  'CONST', 'DIV', 'DO' ,'DOWTO' ,'ELSE', 'END',
@@ -41,6 +48,9 @@ def isComma(letter):
 
 def isTwoPoints(letter):
     return letter == ':'
+
+def isApostropheorQuotes(letter):
+    return letter == '"' or letter == "'"
 
 def findDouble(letter, nextLetter):
         return (letter == ':' and nextLetter == '=')\
@@ -101,22 +111,36 @@ inicio = True
 breakOnSymbols = False
 breakOnLetters = False
 comment = False
+string = False
 
 i = 0
 
-while i < len(textoTeste):
-    letter = textoTeste[i]
+while i < len(contents):
+    letter = contents[i]
 
 
-    if i + 1 != len(textoTeste):
-        nextLetter = textoTeste[i+1]
+    if i + 1 != len(contents):
+        nextLetter = contents[i+1]
 
     if isCommentStart(letter, nextLetter):
         comment = True
     elif isCommentEnd(letter, nextLetter):
         i = i + 1
         comment = False
-    elif comment == False:
+    elif inicio == True and isApostropheorQuotes(letter):
+        temp.append(letter)
+        string = True
+        inicio = False
+    elif inicio == False and string == True:
+        temp.append(letter)
+        if isApostropheorQuotes(letter) and nextLetter == ')':
+            palavra = ''.join(temp)
+            print palavra + ' STRING'
+            temp = []
+            string = False
+            inicio = True
+
+    elif comment == False and string == False:
         if inicio == True and isParenthesis(letter):
             temp.append(letter)
             #print ''.join(temp)
@@ -124,6 +148,7 @@ while i < len(textoTeste):
             if isSpecialSymbol(palavra):
                 print palavra + ' SIMBOLOESPECIAL'
             temp = []
+
         elif inicio == True and findDouble(letter, nextLetter):
             temp.append(letter)
             temp.append(nextLetter)
@@ -159,6 +184,9 @@ while i < len(textoTeste):
 
 
             temp = []
+
+
+
         elif inicio == True and isComma(letter):
             temp.append(letter)
 
