@@ -1,10 +1,5 @@
 import sys
 
-texto = sys.argv[1]
-
-f = open(texto, "r")
-contents = f.read()
-
 #Analisador lexico
 reservedWords = ['ABSOLUTE', 'ARRAY','BEGIN', 'CASE', 'CHAR',
                  'CONST', 'DIV', 'DO' ,'DOWTO' ,'ELSE', 'END',
@@ -19,11 +14,8 @@ logicalOperators = ['and', 'or', 'not']
 specialSymbols = [',', ':', ';', ')', '(']
 assignmentSymbol = [':=']
 
-textoTeste = 'program and or not = >= <= > < <> + - * mod , : ; . ) ( := 900 2.3 2.2 with nit of packed teste;\nvar x,y: and integer;\nconst banana := 2;\nbanana = 1 + * - / 2;\nconst pi := 3.1416;\n/* inicio do programa  12312 31232131 */\nbegin\nread(x);\n\
-if (x >= y) then\ny := x ;\nelse\ny := -x;\nwriteln(x);\nwrite(y);\nend.'
-
 def isLetter(letter):
-    return ord(letter.lower()) >= 97 and ord(letter.lower()) <= 122
+    return ord(letter.lower()) >= 97 and ord(letter.lower()) <= 122 or letter.lower() == '_'
 
 def isNumber(letter):
     return ord(letter.lower()) >= 48 and ord(letter.lower()) <= 57
@@ -60,21 +52,25 @@ def findDouble(letter, nextLetter):
 
 def isWordReserved(term):
     if term.upper() in reservedWords:
-        print term + ' PALAVRARESERVADA'
+        return True
+    return False
 
 def isIdentifier(term):
     if term.upper() not in reservedWords and isLetter(term[0]) and term.lower() not in logicalOperators and term.lower() not in arithmeticalOperators:
-        print term + ' IDENTIFICADOR'
+        return True
+    return False
 
 def isIntegerNumber(term):
     if isNumber(term[0]):
         if float(term) % 1 == 0:
-            print term + ' NUMEROINTEIRO'
+            return True
+    return False
 
 def isRealNumber(term):
     if isNumber(term[0]):
         if float(term) % 1 != 0:
-            print term + ' NUMEROREAL'
+            return True
+    return False
 
 def isArithmeticalOperator(term):
     if term in arithmeticalOperators:
@@ -104,36 +100,75 @@ def isAssignment(term):
 def isEnd(term):
     return term == '.'
 
+def isOtherSymbol(term):
+    return isDotComma(term) or isComma(term) or isTwoPoints(term) or isArithmeticalOperator(term)\
+                or isRelationalOperator(term) or isEnd(term) or isParenthesis(term) or isEnd(term)
+
+def classifyTerm(term):
+    if isSpecialSymbol(palavra):
+        print palavra + ' SIMBOLOESPECIAL'
+    elif isLogicalOperator(palavra):
+        print palavra + ' OPERADORLOGICO'
+    elif isRelationalOperator(palavra):
+        print palavra + ' OPERADORRELACIONAL'
+    elif isArithmeticalOperator(palavra):
+        print palavra + ' OPERADORARITMETICO'
+    elif isAssignment(palavra):
+        print palavra + ' ATRIBUICAO'
+    elif isWordReserved(palavra):
+        print palavra + ' PALAVRARESERVADA'
+    elif isIdentifier(palavra):
+        print palavra + ' IDENTIFICADOR'
+    elif isRealNumber(palavra):
+        print palavra + ' NUMEROREAL'
+    elif isIntegerNumber(palavra):
+        print palavra + ' NUMEROINTEIRO'
+    elif isLogicalOperator(palavra):
+        print palavra + ' OPERADORLOGICO'
+    elif isArithmeticalOperator(palavra):
+        print palavra + ' OPERADORARITMETICO'
+    elif isEnd(palavra):
+        print palavra + ' FIM'
 
 
 temp = []
 inicio = True
 breakOnSymbols = False
-breakOnLetters = False
 comment = False
 string = False
 
 i = 0
 
+texto = sys.argv[1]
+
+f = open(texto, "r")
+contents = f.read()
+
 while i < len(contents):
     letter = contents[i]
 
 
+    #pega o proximo caracter
     if i + 1 != len(contents):
         nextLetter = contents[i+1]
 
+    #confere comentarios
     if isCommentStart(letter, nextLetter):
         comment = True
     elif isCommentEnd(letter, nextLetter):
         i = i + 1
         comment = False
+
+    #Checamos as strings aqui, inicio da string
     elif inicio == True and isApostropheorQuotes(letter):
         temp.append(letter)
         string = True
         inicio = False
+    #Meio da string
     elif inicio == False and string == True:
         temp.append(letter)
-        if isApostropheorQuotes(letter) and nextLetter == ')':
+        #Fim da string
+        if isApostropheorQuotes(letter):
             palavra = ''.join(temp)
             print palavra + ' STRING'
             temp = []
@@ -141,112 +176,27 @@ while i < len(contents):
             inicio = True
 
     elif comment == False and string == False:
-        if inicio == True and isParenthesis(letter):
-            temp.append(letter)
-            #print ''.join(temp)
-            palavra = ''.join(temp)
-            if isSpecialSymbol(palavra):
-                print palavra + ' SIMBOLOESPECIAL'
-            temp = []
-
-        elif inicio == True and findDouble(letter, nextLetter):
+        #Check if is double term, like >= <=
+        if inicio == True and findDouble(letter, nextLetter):
             temp.append(letter)
             temp.append(nextLetter)
-            #print ''.join(temp)
-            palavra = ''.join(temp)
-            if isSpecialSymbol(palavra):
-                print palavra + ' SIMBOLOESPECIAL'
-            elif isLogicalOperator(palavra):
-                print palavra + ' OPERADORLOGICO'
-            elif isRelationalOperator(palavra):
-                print palavra + ' OPERADORRELACIONAL'
-            elif isArithmeticalOperator(palavra):
-                print palavra + ' OPERADORARITMETICO'
-            elif isAssignment(palavra):
-                print palavra + ' ATRIBUICAO'
-            temp = []
-        elif inicio == True and (isLetter(letter) or isNumber(letter)):
 
+            palavra = ''.join(temp)
+            classifyTerm(palavra)
+            temp = []
+            i = i + 1
+
+        #Checamos se sao letras ou numeros, como var1 4.1323 4
+        elif inicio == True and (isLetter(letter) or isNumber(letter)):
             inicio = False
             breakOnSymbols = True
-        elif inicio == True and isDotComma(letter):
+
+        #Analisa simbolos como ) ( ;
+        elif inicio == True and isOtherSymbol(letter):
             temp.append(letter)
 
             palavra = ''.join(temp)
-            if isSpecialSymbol(palavra):
-                print palavra + ' SIMBOLOESPECIAL'
-            elif isLogicalOperator(palavra):
-                print palavra + ' OPERADORLOGICO'
-            elif isRelationalOperator(palavra):
-                print palavra + ' OPERADORRELACIONAL'
-            elif isArithmeticalOperator(palavra):
-                print palavra + ' OPERADORARITMETICO'
-
-
-            temp = []
-
-
-
-        elif inicio == True and isComma(letter):
-            temp.append(letter)
-
-
-            palavra = ''.join(temp)
-            if isSpecialSymbol(palavra):
-                print palavra + ' SIMBOLOESPECIAL'
-            elif isLogicalOperator(palavra):
-                print palavra + ' OPERADORLOGICO'
-            elif isRelationalOperator(palavra):
-                print palavra + ' OPERADORRELACIONAL'
-            elif isArithmeticalOperator(palavra):
-                print palavra + ' OPERADORARITMETICO'
-
-            temp = []
-        elif inicio == True and isTwoPoints(letter):
-            temp.append(letter)
-
-
-            palavra = ''.join(temp)
-            if isSpecialSymbol(palavra):
-                print palavra + ' SIMBOLOESPECIAL'
-            elif isLogicalOperator(palavra):
-                print palavra + ' OPERADORLOGICO'
-            elif isRelationalOperator(palavra):
-                print palavra + ' OPERADORRELACIONAL'
-            elif isArithmeticalOperator(palavra):
-                print palavra + ' OPERADORARITMETICO'
-
-            temp = []
-        elif inicio == True and isArithmeticalOperator(letter):
-            temp.append(letter)
-
-
-            palavra = ''.join(temp)
-            if isSpecialSymbol(palavra):
-                print palavra + ' SIMBOLOESPECIAL'
-            elif isLogicalOperator(palavra):
-                print palavra + ' OPERADORLOGICO'
-            elif isRelationalOperator(palavra):
-                print palavra + ' OPERADORRELACIONAL'
-            elif isArithmeticalOperator(palavra):
-                print palavra + ' OPERADORARITMETICO'
-
-            temp = []
-        elif inicio == True and isEnd(letter):
-            temp.append(letter)
-
-
-            palavra = ''.join(temp)
-            if isSpecialSymbol(palavra):
-                print palavra + ' SIMBOLOESPECIAL'
-            elif isLogicalOperator(palavra):
-                print palavra + ' OPERADORLOGICO'
-            elif isRelationalOperator(palavra):
-                print palavra + ' OPERADORRELACIONAL'
-            elif isArithmeticalOperator(palavra):
-                print palavra + ' OPERADORARITMETICO'
-            elif isEnd(palavra):
-                print palavra + ' FINAL'
+            classifyTerm(palavra)
 
             temp = []
 
@@ -259,45 +209,37 @@ while i < len(contents):
                 elif len(temp) > 0 and isNumber(temp[0]) and isPoint(letter):
                     temp.append(letter)
                 elif len(temp) > 0 and isLetter(temp[0]) and not isPoint(letter):
+
                     temp.append(letter)
                 elif len(temp) > 0 and isNumber(letter) or isLetter(letter):
+
                     temp.append(letter)
                 else:
                     palavra = ''.join(temp)
-                    isWordReserved(palavra)
-                    isIdentifier(palavra)
-                    isRealNumber(palavra)
-                    isIntegerNumber(palavra)
-                    if isLogicalOperator(palavra):
-                        print palavra + ' OPERADORLOGICO'
-                    if isArithmeticalOperator(palavra):
-                        print palavra + ' OPERADORARITMETICO'
+                    classifyTerm(palavra)
                     temp = []
                     inicio = True
                     breakOnSymbols = False
                     i = i - 1
+
             else:
                 palavra = ''.join(temp)
-                isWordReserved(palavra)
-                isIdentifier(palavra)
-                isRealNumber(palavra)
-                isIntegerNumber(palavra)
-                if isLogicalOperator(palavra):
-                    print palavra + ' OPERADORLOGICO'
-                if isArithmeticalOperator(palavra):
-                    print palavra + ' OPERADORARITMETICO'
+                classifyTerm(palavra)
+
                 temp = []
                 inicio = True
                 breakOnSymbols = False
                 i = i - 1
 
-        else:
-            if len(temp) > 0:
-                print temp
-            temp = []
-            inicio = True
-            breakOnSymbols = False
+        # else:
+        #     if len(temp) > 0:
+        #         print temp
+        #     temp = []
+        #     inicio = True
+        #     breakOnSymbols = False
+
     i = i + 1
+
 #
 # for letter in textoTeste:
 #     #print str(ord(letter)) + ' ' + letter
@@ -330,6 +272,24 @@ while i < len(contents):
 #         temp = []
 #         inicio = True
 #         breakOnSymbols = False
+
+
+
+# elif inicio == True and isRelationalOperator(letter):
+#     temp.append(letter)
+#
+#
+#     palavra = ''.join(temp)
+#     if isSpecialSymbol(palavra):
+#         print palavra + ' SIMBOLOESPECIAL'
+#     elif isLogicalOperator(palavra):
+#         print palavra + ' OPERADORLOGICO'
+#     elif isRelationalOperator(palavra):
+#         print palavra + ' OPERADORRELACIONAL'
+#     elif isArithmeticalOperator(palavra):
+#         print palavra + ' OPERADORARITMETICO'
+#
+#     temp = []
 
 
 
