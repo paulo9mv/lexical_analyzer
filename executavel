@@ -1,0 +1,3 @@
+#!/bin/sh
+FILE="lexico.py"
+python2 $FILE $@
