@@ -1,6 +1,0 @@
-Program Lesson1_Program1;
-Begin
-	const pi = 3.141515;
-	Write('Hello World. Prepare to learn PASCAL!!');
-	Readln;
-End.
